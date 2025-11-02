@@ -31,6 +31,7 @@ const colors = {
 const theme = extendTheme({ styles, config, colors });
 
 createRoot(document.getElementById("root")).render(
+  // StrictMode renders every components twice, on development mode
   <StrictMode>
     <RecoilRoot>
 			<BrowserRouter>
