@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import UserHeader from "../components/UserHeader";
-import UserPost from "../components/UserPost";
 import { useParams } from "react-router-dom";
 import useShowToast from "../hooks/useShowToast";
 import { Flex, Spinner } from "@chakra-ui/react";
+import Post from "../components/Post";
 
 const UserPage = () => {
   const [user, setUser] = useState(null);
   const { username } = useParams();
   const showToast = useShowToast();
   const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState([]);
+  const [fetchingPosts, setFetchingPosts] = useState(true);
 
   useEffect(() => {
     const getUser = async () => {
@@ -28,33 +30,52 @@ const UserPage = () => {
       }
     };
 
+    const getPosts = async () => {
+      setFetchingPosts(true);
+      try {
+        const res = await fetch(`/api/posts/user/${username}`);
+        const data = await res.json();
+        console.log("data====>", data);
+        setPosts(data);
+        console.log("posts======>", posts)
+      } catch (error) {
+        showToast("Error", error.message, "error");
+        setPosts([]);
+      } finally {
+        setFetchingPosts(false);
+      }
+    };
+
     getUser();
+    getPosts();
   }, [username, showToast]);
 
-  if(!user && loading) {
+  if (!user && loading) {
     return (
       <Flex justifyContent={"center"}>
-        <Spinner size={'xl'}/>
+        <Spinner size={"xl"} />
       </Flex>
-    )
+    );
   }
 
-  if(!user && ! loading) return <h1>User not found</h1>
-  
-  if(!user) return null;
+  if (!user && !loading) return <h1>User not found</h1>;
+
+  if (!user) return null;
 
   return (
     <>
       <UserHeader user={user} />
-      <UserPost
-        likes={1200}
-        replies={481}
-        postImg="/post1.png"
-        postTitle="Let's talk about threads."
-      />
-      <UserPost likes={451} replies={354} postImg="/post2.png" postTitle="Nice Tutorials" />
-      <UserPost likes={321} replies={243} postImg="/post3.png" postTitle="I love this guy." />
-      <UserPost likes={667} replies={200} postTitle="Let's talk about threads." />
+
+      {!fetchingPosts && posts.length === 0 && <h1>User has not posts.</h1>}
+      {fetchingPosts && (
+        <Flex justifyContent={"center"} my={12}>
+          <Spinner size={"xl"} />
+        </Flex>
+      )}
+
+      {posts.map((post) => (
+        <Post key={post._id} post={post} postedBy={post.postedBy} />
+      ))}
     </>
   );
 };
